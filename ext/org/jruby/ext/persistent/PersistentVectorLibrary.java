@@ -113,7 +113,7 @@ public class PersistentVectorLibrary implements Library {
            if (level == 0)
                return node;
            Node ret = new Node(context.runtime, Node).initialize_params(context, edit);
-           ret.array.set(0, newPath(context, edit, level-5, node));
+           ret.array.unshift(newPath(context, edit, level - 5, node));
            return  ret;
        }
 
@@ -127,12 +127,12 @@ public class PersistentVectorLibrary implements Library {
             }
             else
             {
-                Node child = (Node) parent.array.get(subidx);
+                Node child = (Node) parent.array.at(RubyFixnum.newFixnum(context.runtime, subidx));
                 nodeToInsert = (child != null)?
                         pushTail(context, level-5,child, tailnode)
                         :newPath(context, root.edit,level-5, tailnode);
             }
-            ret.array.set(subidx, nodeToInsert);
+            ret.array.insert(RubyFixnum.newFixnum(context.runtime, subidx), nodeToInsert);
             return ret;
         }
 
@@ -151,14 +151,14 @@ public class PersistentVectorLibrary implements Library {
 
            if ((cnt >>> 5) > (1 << shift)) {
                newroot = new Node(context.runtime, Node).initialize_params(context, root.edit);
-               newroot.array.set(0, root);
-               newroot.array.set(1, newPath(context, root.edit, shift, tailnode));
+               newroot.array.unshift(newPath(context, root.edit, shift, tailnode));
+               newroot.array.unshift(root);
                newshift += 5;
            } else
                newroot = pushTail(context, shift, root, tailnode);
 
-           RubyArray arry = RubyArray.newArray(context.runtime, 32);
-           arry.set(0, val);
+           RubyArray arry = RubyArray.newArray(context.runtime);
+           arry.unshift(val);
 
            return new PersistentVector(context.runtime, getMetaClass()).initialize(context, cnt + 1, newshift, newroot, arry);
        }
