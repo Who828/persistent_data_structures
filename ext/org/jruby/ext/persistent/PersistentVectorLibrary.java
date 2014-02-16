@@ -104,9 +104,9 @@ public class PersistentVectorLibrary implements Library {
             return ret1;
        }
 
-       @JRubyMethod(name = "tail")
-       public IRubyObject tail(ThreadContext context) {
-           return this.tail;
+       @JRubyMethod(name = "size")
+       public IRubyObject count(ThreadContext context) {
+           return JavaUtil.convertJavaToRuby(context.runtime, cnt);
        }
 
        private static Node newPath(ThreadContext context, AtomicReference<Thread> edit, int level, Node node) {

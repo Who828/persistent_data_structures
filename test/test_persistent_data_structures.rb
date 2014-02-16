@@ -17,7 +17,7 @@ module Persistent
   class TestVector < Test::Unit::TestCase
     def test_construct
       vector = Persistent::Vector.vector([1, 2, 3, 4, 5, 6])
-      assert_equal vector.tail , [1, 2, 3, 4, 5, 6]
+      assert_equal vector.size , 6
     end
   end 
 end
