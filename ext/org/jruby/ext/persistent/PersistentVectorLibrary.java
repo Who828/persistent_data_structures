@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PersistentVectorLibrary implements Library {
     static public RubyClass Node;
     static public RubyClass PersistentVector;
+    static public RubyClass TransientVector;
 
     public void load(Ruby runtime, boolean wrap) {
         RubyModule persistent = runtime.getOrCreateModule("Persistent");
@@ -94,14 +95,19 @@ public class PersistentVectorLibrary implements Library {
             return this;
         }
 
+        public TransientVector asTransient(ThreadContext context){
+            return (TransientVector) new TransientVector(context.runtime, TransientVector).initialize(context, this);
+        }
+
         @JRubyMethod(name = "vector", meta = true)
         static public IRubyObject vector(ThreadContext context, IRubyObject cls, IRubyObject items) {
             PersistentVector ret = new PersistentVector(context.runtime, (RubyClass) cls);
             PersistentVector ret1 = (PersistentVector) ret.initialize(context, 0, 5, new Node(context.runtime, Node).initialize_params(context, NOEDIT), RubyArray.newArray(context.runtime, 32));
+            TransientVector ret2 = ret1.asTransient(context);
             for(Object item : (RubyArray) items) {
-                ret1 = (PersistentVector) ret1.add(context, JavaUtil.convertJavaToRuby(context.runtime, item));
+                ret2 = (TransientVector) ret2.conj(context, JavaUtil.convertJavaToRuby(context.runtime, item));
             }
-            return ret1;
+            return ret2.persistent(context, (RubyClass) cls);
        }
 
        @JRubyMethod(name = "size")
@@ -162,6 +168,120 @@ public class PersistentVectorLibrary implements Library {
 
            return new PersistentVector(context.runtime, getMetaClass()).initialize(context, cnt + 1, newshift, newroot, arry);
        }
+
+        final int tailoff(){
+            if (cnt < 32)
+                return 0;
+            return ((cnt-1) >>> 5) << 5;
+        }
+
+
+    }
+
+    public static class TransientVector extends RubyObject {
+        int cnt;
+        int shift;
+        Node root;
+        RubyArray tail;
+
+
+        public TransientVector(Ruby runtime, RubyClass rubyClass) {
+            super(runtime, rubyClass);
+        }
+
+        public IRubyObject initialize(ThreadContext context, PersistentVector v) {
+            this.cnt = v.cnt;
+            this.shift = v.shift;
+            this.root = editableRoot(context, v.root);
+            this.tail = (RubyArray) v.tail.dup();
+            return this;
+        }
+
+        static Node editableRoot(ThreadContext context, Node node){
+            return new Node(context.runtime, Node).initialize_params_arry(context, new AtomicReference<Thread>(Thread.currentThread()), (RubyArray) node.array.dup());
+        }
+
+
+        private static Node newPath(ThreadContext context, AtomicReference<Thread> edit, int level, Node node) {
+            if (level == 0)
+                return node;
+            Node ret = new Node(context.runtime, Node).initialize_params(context, edit);
+            ret.array.unshift(newPath(context, edit, level - 5, node));
+            return  ret;
+        }
+
+        void ensureEditable(){
+            Thread owner = root.edit.get();
+            if(owner == Thread.currentThread())
+                return;
+            if(owner != null)
+                throw new IllegalAccessError("Transient used by non-owner thread");
+            throw new IllegalAccessError("Transient used after persistent! call");
+        }
+
+        Node ensureEditable(ThreadContext context, Node node){
+            if(node.edit == root.edit)
+                return node;
+            return new Node(context.runtime, Node).initialize_params_arry(context, root.edit, (RubyArray) node.array.dup());
+        }
+
+        private Node pushTail(ThreadContext context, int level, Node parent, Node tailnode){
+            parent = ensureEditable(context, parent);
+            int subidx = ((cnt - 1) >>> level) & 0x01f;
+            Node ret = parent;
+            Node nodeToInsert;
+            if(level == 5)
+            {
+                nodeToInsert = tailnode;
+            }
+            else
+            {
+                Node child = (Node) parent.array.at(RubyFixnum.newFixnum(context.runtime, subidx));
+                nodeToInsert = (child != null)?
+                        pushTail(context, level-5,child, tailnode)
+                        :newPath(context, root.edit,level-5, tailnode);
+            }
+            ret.array.insert(RubyFixnum.newFixnum(context.runtime, subidx), nodeToInsert);
+            return ret;
+        }
+
+        public PersistentVector persistent(ThreadContext context, RubyClass cls){
+            ensureEditable();
+            Ruby runtime = context.runtime;
+            root.edit.set(null);
+            RubyArray trimmedTail = (RubyArray) tail.slice_bang(RubyFixnum.newFixnum(runtime, 0), RubyFixnum.newFixnum(runtime, cnt-tailoff())).dup();
+            return (PersistentVector) new PersistentVector(context.runtime, cls).initialize(context, cnt, shift, root, trimmedTail);
+        }
+
+        public IRubyObject conj(ThreadContext context, IRubyObject val) {
+            ensureEditable();
+            int i = cnt;
+
+            if (i - tailoff() < 32) {
+                tail.insert(RubyFixnum.newFixnum(context.runtime, i & 0x01f), val);
+                ++cnt;
+                return this;
+            }
+
+            Node newroot;
+            Node tailnode = new Node(context.runtime, Node).initialize_params_arry(context, root.edit, tail);
+            tail = RubyArray.newArray(context.runtime, 32);
+            tail.unshift(val);
+            int newshift = shift;
+
+            if ((cnt >>> 5) > (1 << shift)) {
+                newroot = new Node(context.runtime, Node).initialize_params(context, root.edit);
+                newroot.array.unshift(newPath(context, root.edit, shift, tailnode));
+                newroot.array.unshift(root);
+                newshift += 5;
+            } else
+                newroot = pushTail(context, shift, root, tailnode);
+
+            root = newroot;
+            shift = newshift;
+            ++cnt;
+            return this;
+        }
 
         final int tailoff(){
             if (cnt < 32)
