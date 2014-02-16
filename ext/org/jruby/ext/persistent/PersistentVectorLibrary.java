@@ -97,7 +97,7 @@ public class PersistentVectorLibrary implements Library {
         @JRubyMethod(name = "vector", meta = true)
         static public IRubyObject vector(ThreadContext context, IRubyObject cls, IRubyObject items) {
             PersistentVector ret = new PersistentVector(context.runtime, (RubyClass) cls);
-            PersistentVector ret1 = (PersistentVector) ret.initialize(context, 0, 5, new Node(context.runtime, Node).initialize_params(context, NOEDIT), RubyArray.newArray(context.runtime));
+            PersistentVector ret1 = (PersistentVector) ret.initialize(context, 0, 5, new Node(context.runtime, Node).initialize_params(context, NOEDIT), RubyArray.newArray(context.runtime, 32));
             for(Object item : (RubyArray) items) {
                 ret1 = (PersistentVector) ret1.add(context, JavaUtil.convertJavaToRuby(context.runtime, item));
             }
@@ -149,8 +149,7 @@ public class PersistentVectorLibrary implements Library {
            Node tailnode = new Node(context.runtime, Node).initialize_params(context, root.edit);
            int newshift = shift;
 
-           if ((cnt >> 5) > (1 << shift)) {
-               System.out.println("level" + shift);
+           if ((cnt >>> 5) > (1 << shift)) {
                newroot = new Node(context.runtime, Node).initialize_params(context, root.edit);
                newroot.array.set(0, root);
                newroot.array.set(1, newPath(context, root.edit, shift, tailnode));
@@ -158,8 +157,8 @@ public class PersistentVectorLibrary implements Library {
            } else
                newroot = pushTail(context, shift, root, tailnode);
 
-           RubyArray arry = RubyArray.newArray(context.runtime, 1);
-           arry.unshift(val);
+           RubyArray arry = RubyArray.newArray(context.runtime, 32);
+           arry.set(0, val);
 
            return new PersistentVector(context.runtime, getMetaClass()).initialize(context, cnt + 1, newshift, newroot, arry);
        }
