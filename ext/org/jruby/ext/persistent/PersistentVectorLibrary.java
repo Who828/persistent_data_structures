@@ -133,12 +133,12 @@ public class PersistentVectorLibrary implements Library {
             }
             else
             {
-                Node child = (Node) parent.array.at(RubyFixnum.newFixnum(context.runtime, subidx));
+                Node child = (Node) parent.array.eltOk(subidx);
                 nodeToInsert = (child != null)?
                         pushTail(context, level-5,child, tailnode)
                         :newPath(context, root.edit,level-5, tailnode);
             }
-            ret.array.insert(RubyFixnum.newFixnum(context.runtime, subidx), nodeToInsert);
+            ret.array.add(subidx, nodeToInsert);
             return ret;
         }
 
@@ -236,12 +236,12 @@ public class PersistentVectorLibrary implements Library {
             }
             else
             {
-                Node child = (Node) parent.array.at(RubyFixnum.newFixnum(context.runtime, subidx));
+                Node child = (Node) parent.array.eltOk(subidx);
                 nodeToInsert = (child != null)?
                         pushTail(context, level-5,child, tailnode)
                         :newPath(context, root.edit,level-5, tailnode);
             }
-            ret.array.insert(RubyFixnum.newFixnum(context.runtime, subidx), nodeToInsert);
+            ret.array.add(subidx, nodeToInsert);
             return ret;
         }
 
@@ -249,7 +249,7 @@ public class PersistentVectorLibrary implements Library {
             ensureEditable();
             Ruby runtime = context.runtime;
             root.edit.set(null);
-            RubyArray trimmedTail = (RubyArray) tail.slice_bang(RubyFixnum.newFixnum(runtime, 0), RubyFixnum.newFixnum(runtime, cnt-tailoff())).dup();
+            RubyArray trimmedTail = (RubyArray) tail.subseq(0,  cnt-tailoff()).dup();
             return (PersistentVector) new PersistentVector(context.runtime, cls).initialize(context, cnt, shift, root, trimmedTail);
         }
 
@@ -258,7 +258,7 @@ public class PersistentVectorLibrary implements Library {
             int i = cnt;
 
             if (i - tailoff() < 32) {
-                tail.insert(RubyFixnum.newFixnum(context.runtime, i & 0x01f), val);
+                tail.add(i & 0x01f, val);
                 ++cnt;
                 return this;
             }
