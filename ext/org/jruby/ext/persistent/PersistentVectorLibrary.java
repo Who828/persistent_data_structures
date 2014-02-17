@@ -119,7 +119,7 @@ public class PersistentVectorLibrary implements Library {
            if (level == 0)
                return node;
            Node ret = new Node(context.runtime, Node).initialize_params(context, edit);
-           ret.array.unshift(newPath(context, edit, level - 5, node));
+           ret.array.add(0, newPath(context, edit, level - 5, node));
            return  ret;
        }
 
@@ -157,14 +157,14 @@ public class PersistentVectorLibrary implements Library {
 
            if ((cnt >>> 5) > (1 << shift)) {
                newroot = new Node(context.runtime, Node).initialize_params(context, root.edit);
-               newroot.array.unshift(newPath(context, root.edit, shift, tailnode));
-               newroot.array.unshift(root);
+               newroot.array.add(0, root);
+               newroot.array.add(1, newPath(context, root.edit, shift, tailnode));
                newshift += 5;
            } else
                newroot = pushTail(context, shift, root, tailnode);
 
-           RubyArray arry = RubyArray.newArray(context.runtime);
-           arry.unshift(val);
+           RubyArray arry = RubyArray.newArray(context.runtime, 32);
+           arry.add(0, val);
 
            return new PersistentVector(context.runtime, getMetaClass()).initialize(context, cnt + 1, newshift, newroot, arry);
        }
@@ -206,7 +206,7 @@ public class PersistentVectorLibrary implements Library {
             if (level == 0)
                 return node;
             Node ret = new Node(context.runtime, Node).initialize_params(context, edit);
-            ret.array.unshift(newPath(context, edit, level - 5, node));
+            ret.array.add(0, newPath(context, edit, level - 5, node));
             return  ret;
         }
 
@@ -266,13 +266,13 @@ public class PersistentVectorLibrary implements Library {
             Node newroot;
             Node tailnode = new Node(context.runtime, Node).initialize_params_arry(context, root.edit, tail);
             tail = RubyArray.newArray(context.runtime, 32);
-            tail.unshift(val);
+            tail.add(0, val);
             int newshift = shift;
 
             if ((cnt >>> 5) > (1 << shift)) {
                 newroot = new Node(context.runtime, Node).initialize_params(context, root.edit);
-                newroot.array.unshift(newPath(context, root.edit, shift, tailnode));
-                newroot.array.unshift(root);
+                newroot.array.add(0,root);
+                newroot.array.add(1, newPath(context, root.edit, shift, tailnode));
                 newshift += 5;
             } else
                 newroot = pushTail(context, shift, root, tailnode);
