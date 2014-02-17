@@ -52,4 +52,4 @@ if defined?(JRUBY_VERSION)
 
   task :package => :jar
 end
-
+task :test => :package
