@@ -22,6 +22,10 @@ Rake::TestTask.new :test do |t|
   t.test_files = FileList["test/**/*.rb"]
 end
 
+desc "Run benchmarks"
+task :bench do
+    exec "ruby -Ilib -Iext test/bench.rb"
+end
 
 if defined?(JRUBY_VERSION)
   require 'ant'
@@ -47,15 +51,5 @@ if defined?(JRUBY_VERSION)
   end
 
   task :package => :jar
-else
-  task :package do
-    Dir.chdir("ext") do
-      # this does essentially the same thing
-      # as what RubyGems does
-      ruby "extconf.rb"
-      sh "make"
-    end
-  end
 end
 
-task :test => :package
