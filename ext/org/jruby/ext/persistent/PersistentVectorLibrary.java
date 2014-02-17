@@ -125,7 +125,7 @@ public class PersistentVectorLibrary implements Library {
 
         private Node pushTail(ThreadContext context, int level, Node parent, Node tailnode){
             int subidx = ((cnt - 1) >>> level) & 0x01f;
-            Node ret = new Node(context.runtime, Node).initialize_params_arry(context, parent.edit, (RubyArray) parent.array.dup());
+            Node ret = new Node(context.runtime, Node).initialize_params_arry(context, parent.edit, parent.array.aryDup());
             Node nodeToInsert;
             if(level == 5)
             {
@@ -146,7 +146,7 @@ public class PersistentVectorLibrary implements Library {
        public IRubyObject add(ThreadContext context, IRubyObject val) {
            if (cnt - tailoff() < 32) {
                PersistentVector ret = new PersistentVector(context.runtime, getMetaClass());
-               RubyArray newTail = (RubyArray) tail.dup();
+               RubyArray newTail = tail.aryDup();
                newTail.add(val);
                return ret.initialize(context, this.cnt+1, this.shift, this.root, newTail);
            }
@@ -193,12 +193,12 @@ public class PersistentVectorLibrary implements Library {
             this.cnt = v.cnt;
             this.shift = v.shift;
             this.root = editableRoot(context, v.root);
-            this.tail = (RubyArray) v.tail.dup();
+            this.tail =  v.tail.aryDup();
             return this;
         }
 
         static Node editableRoot(ThreadContext context, Node node){
-            return new Node(context.runtime, Node).initialize_params_arry(context, new AtomicReference<Thread>(Thread.currentThread()), (RubyArray) node.array.dup());
+            return new Node(context.runtime, Node).initialize_params_arry(context, new AtomicReference<Thread>(Thread.currentThread()), node.array.aryDup());
         }
 
 
@@ -222,7 +222,7 @@ public class PersistentVectorLibrary implements Library {
         Node ensureEditable(ThreadContext context, Node node){
             if(node.edit == root.edit)
                 return node;
-            return new Node(context.runtime, Node).initialize_params_arry(context, root.edit, (RubyArray) node.array.dup());
+            return new Node(context.runtime, Node).initialize_params_arry(context, root.edit, node.array.aryDup());
         }
 
         private Node pushTail(ThreadContext context, int level, Node parent, Node tailnode){
