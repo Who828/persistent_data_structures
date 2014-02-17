@@ -16,8 +16,9 @@ require 'persistent_data_structure'
 module Persistent
   class TestVector < Test::Unit::TestCase
     def test_construct
-      vector = Persistent::Vector.vector([1, 2, 3, 4, 5, 6])
-      assert_equal vector.size , 6
+      vector = Persistent::Vector.vector([*1..10000])
+      assert_equal vector.size , 10000
+      assert_equal vector.get(919) , 920
     end
   end 
 end

@@ -115,6 +115,27 @@ public class PersistentVectorLibrary implements Library {
            return JavaUtil.convertJavaToRuby(context.runtime, cnt);
        }
 
+       @JRubyMethod(name = "get")
+       public IRubyObject nth(ThreadContext context, IRubyObject i) {
+           int j = RubyNumeric.num2int(i);
+           RubyArray node = arrayFor(j);
+           return node.eltOk(j & 0x01f);
+       }
+
+       private RubyArray arrayFor(int i){
+            if(i >= 0 && i < cnt)
+            {
+                if(i >= tailoff())
+                    return tail;
+                Node node = root;
+                for(int level = shift; level > 0; level -= 5)
+                    node = (Node) node.array.eltOk((i >>> level) & 0x01f);
+                return node.array;
+            }
+            throw new IndexOutOfBoundsException();
+        }
+
+
        private static Node newPath(ThreadContext context, AtomicReference<Thread> edit, int level, Node node) {
            if (level == 0)
                return node;

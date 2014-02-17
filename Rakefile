@@ -24,7 +24,7 @@ end
 
 desc "Run benchmarks"
 task :bench do
-    exec "ruby -Ilib -Iext test/bench.rb"
+    exec "ruby -Ilib -Iext bench/bench.rb"
 end
 
 if defined?(JRUBY_VERSION)
