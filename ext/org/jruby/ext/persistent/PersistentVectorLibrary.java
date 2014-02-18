@@ -76,7 +76,8 @@ public class PersistentVectorLibrary implements Library {
 
     @JRubyClass(name="Vector")
     public static class PersistentVector extends RubyObject {
-        static AtomicReference<Thread> NOEDIT = new AtomicReference<Thread>(null);
+        static final AtomicReference<Thread> NOEDIT = new AtomicReference<Thread>(null);
+
         public int cnt;
         public  int shift;
         public  Node root;
@@ -99,15 +100,18 @@ public class PersistentVectorLibrary implements Library {
             return (TransientVector) new TransientVector(context.runtime, TransientVector).initialize(context, this);
         }
 
+        static private PersistentVector emptyVector(ThreadContext context, RubyClass rubyClass) {
+            Node emptyNode =  (Node) new Node(context.runtime, Node).initialize_params(context, NOEDIT);
+            return (PersistentVector) new PersistentVector(context.runtime, rubyClass).initialize(context, 0, 5, emptyNode, RubyArray.newArray(context.runtime, 32));
+        }
+
         @JRubyMethod(name = "vector", meta = true)
         static public IRubyObject vector(ThreadContext context, IRubyObject cls, IRubyObject items) {
-            PersistentVector ret = new PersistentVector(context.runtime, (RubyClass) cls);
-            PersistentVector ret1 = (PersistentVector) ret.initialize(context, 0, 5, new Node(context.runtime, Node).initialize_params(context, NOEDIT), RubyArray.newArray(context.runtime, 32));
-            TransientVector ret2 = ret1.asTransient(context);
+            TransientVector ret = emptyVector(context, (RubyClass) cls).asTransient(context);
             for(Object item : (RubyArray) items) {
-                ret2 = (TransientVector) ret2.conj(context, JavaUtil.convertJavaToRuby(context.runtime, item));
+                ret = (TransientVector) ret.conj(context, JavaUtil.convertJavaToRuby(context.runtime, item));
             }
-            return ret2.persistent(context, (RubyClass) cls);
+            return ret.persistent(context, (RubyClass) cls);
        }
 
        @JRubyMethod(name = "size")
