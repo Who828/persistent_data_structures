@@ -1,6 +1,6 @@
 require 'benchmark'
 require 'persistent_data_structure'
-loop do 
+30.times do 
   arry = [*1..100000]
   puts "Vector from Array"
   puts Benchmark.measure {
