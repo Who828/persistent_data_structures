@@ -37,9 +37,9 @@ import org.jruby.runtime.load.Library;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PersistentVectorLibrary implements Library {
-    static public RubyClass Node;
+    static private RubyClass Node;
     static public RubyClass PersistentVector;
-    static public RubyClass TransientVector;
+    static private RubyClass TransientVector;
 
     public void load(Ruby runtime, boolean wrap) {
         RubyModule persistent = runtime.getOrCreateModule("Persistent");
@@ -53,7 +53,7 @@ public class PersistentVectorLibrary implements Library {
         persistentVector.defineAnnotatedMethods(PersistentVector.class);
     }
 
-    public static class Node extends RubyObject {
+    private static class Node extends RubyObject {
         transient public AtomicReference<Thread> edit;
         public RubyArray array;
 
@@ -110,7 +110,7 @@ public class PersistentVectorLibrary implements Library {
             TransientVector ret = emptyVector(context, (RubyClass) cls).asTransient(context);
             RubyArray item_list = (RubyArray) items;
             for(int i=0; i < item_list.getLength(); i++) {
-                ret = (TransientVector) ret.conj(context, item_list.eltOk(i));
+                ret = (TransientVector) ret.conj(context, item_list.entry(i));
             }
             return ret.persistent(context, (RubyClass) cls);
        }
@@ -124,7 +124,7 @@ public class PersistentVectorLibrary implements Library {
        public IRubyObject nth(ThreadContext context, IRubyObject i) {
            int j = RubyNumeric.num2int(i);
            RubyArray node = arrayFor(j);
-           return node.eltOk(j & 0x01f);
+           return node.entry(j & 0x01f);
        }
 
        private RubyArray arrayFor(int i){
@@ -134,7 +134,7 @@ public class PersistentVectorLibrary implements Library {
                     return tail;
                 Node node = root;
                 for(int level = shift; level > 0; level -= 5)
-                    node = (Node) node.array.eltOk((i >>> level) & 0x01f);
+                    node = (Node) node.array.entry((i >>> level) & 0x01f);
                 return node.array;
             }
             throw new IndexOutOfBoundsException();
@@ -145,7 +145,7 @@ public class PersistentVectorLibrary implements Library {
            if (level == 0)
                return node;
            Node ret = new Node(context.runtime, Node).initialize_params(context, edit);
-           ret.array.add(0, newPath(context, edit, level - 5, node));
+           ret.array.store(0, newPath(context, edit, level - 5, node));
            return  ret;
        }
 
@@ -159,12 +159,12 @@ public class PersistentVectorLibrary implements Library {
             }
             else
             {
-                Node child = (Node) parent.array.eltOk(subidx);
-                nodeToInsert = (child != null)?
-                        pushTail(context, level-5,child, tailnode)
+                IRubyObject child = parent.array.entry(subidx);
+                nodeToInsert = (!child.isNil())?
+                        pushTail(context, level-5,(Node) child, tailnode)
                         :newPath(context, root.edit,level-5, tailnode);
             }
-            ret.array.add(subidx, nodeToInsert);
+            ret.array.store(subidx, nodeToInsert);
             return ret;
         }
 
@@ -173,7 +173,7 @@ public class PersistentVectorLibrary implements Library {
            if (cnt - tailoff() < 32) {
                PersistentVector ret = new PersistentVector(context.runtime, getMetaClass());
                RubyArray newTail = tail.aryDup();
-               newTail.add(val);
+               newTail.eltInternalSet(0, val);
                return ret.initialize(context, this.cnt+1, this.shift, this.root, newTail);
            }
 
@@ -183,14 +183,14 @@ public class PersistentVectorLibrary implements Library {
 
            if ((cnt >>> 5) > (1 << shift)) {
                newroot = new Node(context.runtime, Node).initialize_params(context, root.edit);
-               newroot.array.add(0, root);
-               newroot.array.add(1, newPath(context, root.edit, shift, tailnode));
+               newroot.array.store(0, root);
+               newroot.array.store(1, newPath(context, root.edit, shift, tailnode));
                newshift += 5;
            } else
                newroot = pushTail(context, shift, root, tailnode);
 
-           RubyArray arry = RubyArray.newArray(context.runtime, 32);
-           arry.add(0, val);
+           RubyArray arry = RubyArray.newArray(context.runtime);
+           arry.eltInternalSet(0, val);
 
            return new PersistentVector(context.runtime, getMetaClass()).initialize(context, cnt + 1, newshift, newroot, arry);
        }
@@ -204,7 +204,7 @@ public class PersistentVectorLibrary implements Library {
 
     }
 
-    public static class TransientVector extends RubyObject {
+    private static class TransientVector extends RubyObject {
         int cnt;
         int shift;
         Node root;
@@ -232,7 +232,7 @@ public class PersistentVectorLibrary implements Library {
             if (level == 0)
                 return node;
             Node ret = new Node(context.runtime, Node).initialize_params(context, edit);
-            ret.array.add(0, newPath(context, edit, level - 5, node));
+            ret.array.store(0, newPath(context, edit, level - 5, node));
             return  ret;
         }
 
@@ -262,12 +262,12 @@ public class PersistentVectorLibrary implements Library {
             }
             else
             {
-                Node child = (Node) parent.array.eltOk(subidx);
-                nodeToInsert = (child != null)?
-                        pushTail(context, level-5,child, tailnode)
+                IRubyObject child = parent.array.entry(subidx);
+                nodeToInsert = (!child.isNil())?
+                        pushTail(context, level-5, (Node) child, tailnode)
                         :newPath(context, root.edit,level-5, tailnode);
             }
-            ret.array.add(subidx, nodeToInsert);
+            ret.array.store(subidx, nodeToInsert);
             return ret;
         }
 
@@ -284,7 +284,7 @@ public class PersistentVectorLibrary implements Library {
             int i = cnt;
 
             if (i - tailoff() < 32) {
-                tail.add(i & 0x01f, val);
+                tail.store(i & 0x01f, val);
                 ++cnt;
                 return this;
             }
@@ -292,13 +292,13 @@ public class PersistentVectorLibrary implements Library {
             Node newroot;
             Node tailnode = new Node(context.runtime, Node).initialize_params_arry(context, root.edit, tail);
             tail = RubyArray.newArray(context.runtime, 32);
-            tail.add(0, val);
+            tail.store(0, val);
             int newshift = shift;
 
             if ((cnt >>> 5) > (1 << shift)) {
                 newroot = new Node(context.runtime, Node).initialize_params(context, root.edit);
-                newroot.array.add(0,root);
-                newroot.array.add(1, newPath(context, root.edit, shift, tailnode));
+                newroot.array.store(0,root);
+                newroot.array.store(1, newPath(context, root.edit, shift, tailnode));
                 newshift += 5;
             } else
                 newroot = pushTail(context, shift, root, tailnode);
