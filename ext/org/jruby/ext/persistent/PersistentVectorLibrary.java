@@ -108,18 +108,19 @@ public class PersistentVectorLibrary implements Library {
         @JRubyMethod(name = "vector", meta = true)
         static public IRubyObject vector(ThreadContext context, IRubyObject cls, IRubyObject items) {
             TransientVector ret = emptyVector(context, (RubyClass) cls).asTransient(context);
-            for(Object item : (RubyArray) items) {
-                ret = (TransientVector) ret.conj(context, JavaUtil.convertJavaToRuby(context.runtime, item));
+            RubyArray item_list = (RubyArray) items;
+            for(int i=0; i < item_list.getLength(); i++) {
+                ret = (TransientVector) ret.conj(context, item_list.eltOk(i));
             }
             return ret.persistent(context, (RubyClass) cls);
        }
 
-       @JRubyMethod(name = "size")
+       @JRubyMethod(name = "size", alias = "length")
        public IRubyObject count(ThreadContext context) {
            return JavaUtil.convertJavaToRuby(context.runtime, cnt);
        }
 
-       @JRubyMethod(name = "get")
+       @JRubyMethod(name = "get", alias = "[]")
        public IRubyObject nth(ThreadContext context, IRubyObject i) {
            int j = RubyNumeric.num2int(i);
            RubyArray node = arrayFor(j);
