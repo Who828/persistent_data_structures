@@ -173,7 +173,7 @@ public class PersistentVectorLibrary implements Library {
            if (cnt - tailoff() < 32) {
                PersistentVector ret = new PersistentVector(context.runtime, getMetaClass());
                RubyArray newTail = tail.aryDup();
-               newTail.append(val);
+               newTail.eltInternalSet(tail.getLength(), val);
                return ret.initialize(context, this.cnt+1, this.shift, this.root, newTail);
            }
 
