@@ -39,5 +39,17 @@ module Persistent
       new_vector = vector.set(996, 2004)
       assert_equal new_vector.get(996), 2004
     end
+
+    def test_vector_pop
+      vector = Persistent::Vector.vector([])
+      (1..10000).each do |i|
+        vector = vector.add(i)
+      end
+      (10000).downto(2).each do |i|
+        new_vector = vector.pop
+        assert_equal new_vector.tail.last, i-1
+        vector = new_vector
+      end
+    end
   end
 end
