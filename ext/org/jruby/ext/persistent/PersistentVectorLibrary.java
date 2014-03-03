@@ -105,7 +105,7 @@ public class PersistentVectorLibrary implements Library {
             return (PersistentVector) new PersistentVector(context.runtime, rubyClass).initialize(context, 0, 5, emptyNode, RubyArray.newArray(context.runtime, 32));
         }
 
-        @JRubyMethod(name = "vector", meta = true)
+        @JRubyMethod(name = "vector", meta = true, required=1)
         static public IRubyObject vector(ThreadContext context, IRubyObject cls, IRubyObject items) {
             TransientVector ret = emptyVector(context, (RubyClass) cls).asTransient(context);
             RubyArray item_list = (RubyArray) items;
@@ -120,7 +120,7 @@ public class PersistentVectorLibrary implements Library {
            return JavaUtil.convertJavaToRuby(context.runtime, cnt);
        }
 
-       @JRubyMethod(name = "get", alias = "[]")
+       @JRubyMethod(name = "get", alias = "[]", required=1)
        public IRubyObject nth(ThreadContext context, IRubyObject i) {
            int j = RubyNumeric.num2int(i);
            RubyArray node = arrayFor(j);
@@ -139,6 +139,35 @@ public class PersistentVectorLibrary implements Library {
             }
             throw new IndexOutOfBoundsException();
         }
+
+        @JRubyMethod(name = "set", required=2)
+        public IRubyObject set(ThreadContext context, IRubyObject i, IRubyObject val) {
+          int j = RubyNumeric.num2int(i);
+          if (j >=0 && j < cnt) {
+            if (j >= tailoff()) {
+             RubyArray newTail = tail.aryDup(); 
+             newTail.store(j & 0x01f, val);
+             return new PersistentVector(context.runtime, getMetaClass()).initialize(context, cnt, shift, root, newTail);
+           }
+           return new PersistentVector(context.runtime, getMetaClass()).initialize(context, cnt, shift, doSet(context, shift, root, j, val), tail);
+         }
+
+         if (j == cnt)
+          add(context, val);
+
+         throw new IndexOutOfBoundsException();
+       }
+
+       private Node doSet(ThreadContext context, int level, Node node, int i, IRubyObject val) {
+        Node ret = new Node(context.runtime, Node).initialize_params_arry(context, node.edit, node.array.aryDup());
+        if (level == 0)
+          ret.array.store(i & 0x01f, val);
+        else {
+          int subidx = (i >> level) & 0x01f;
+          ret.array.store(subidx, doSet(context, level-5, (Node) node.array.entry(subidx), i, val));
+        }
+        return ret;
+       }
 
 
        private static Node newPath(ThreadContext context, AtomicReference<Thread> edit, int level, Node node) {
@@ -200,7 +229,6 @@ public class PersistentVectorLibrary implements Library {
                 return 0;
             return ((cnt-1) >>> 5) << 5;
         }
-
 
     }
 

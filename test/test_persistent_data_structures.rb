@@ -30,5 +30,14 @@ module Persistent
         assert_equal vector.get(i-1) , i
       end
     end
+
+    def test_vector_set
+      vector = Persistent::Vector.vector([])
+      (1..10000).each do |i|
+        vector = vector.add(i)
+      end
+      new_vector = vector.set(996, 2004)
+      assert_equal new_vector.get(996), 2004
+    end
   end
 end
