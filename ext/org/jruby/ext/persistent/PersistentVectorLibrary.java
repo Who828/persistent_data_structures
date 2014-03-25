@@ -24,6 +24,8 @@
     import org.jruby.javasupport.JavaUtil;
     import org.jruby.RubyArray;
     import org.jruby.RubyClass;
+    import org.jruby.runtime.Block;
+    import org.jruby.runtime.BlockBody;
     import org.jruby.RubyFixnum;
     import org.jruby.RubyModule;
     import org.jruby.RubyNumeric;
@@ -50,6 +52,7 @@
                     return new PersistentVector(ruby, rubyClass);
                 }
             });
+            persistentVector.includeModule(runtime.getEnumerable());
             persistentVector.defineAnnotatedMethods(PersistentVector.class);
         }
 
@@ -127,6 +130,16 @@
            @JRubyMethod(name = "tail")
            public IRubyObject tail(ThreadContext context) {
                return tail;
+           }
+
+           @JRubyMethod
+           public IRubyObject each(ThreadContext context, Block block) {
+
+               for(int i=0; i < cnt; i++) {
+                   block.yield(context, nth(context, RubyFixnum.newFixnum(context.runtime, i)));
+               }
+
+               return this;
            }
 
            @JRubyMethod(name = "get", alias = "[]", required=1)

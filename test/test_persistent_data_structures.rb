@@ -40,6 +40,14 @@ module Persistent
       assert_equal new_vector.get(996), 2004
     end
 
+    def test_vector_each
+      vector = Persistent::Vector.vector([])
+      (1..10000).each do |i|
+        vector = vector.add(i)
+      end
+      vector.each { |i| assert_equal vector[i-1], i }
+    end
+
     def test_vector_pop
       vector = Persistent::Vector.vector([])
       (1..10000).each do |i|
