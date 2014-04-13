@@ -144,13 +144,31 @@ public class PersistentVectorLibrary implements Library {
             return this;
         }
 
+        @JRubyMethod(name = {"collect", "map"})
+        public IRubyObject collect(ThreadContext context, Block block) {
+            Ruby runtime = context.runtime;
+            if (!block.isGiven()) return emptyVector(context, getMetaClass());
+
+            TransientVector ret = emptyVector(context, getMetaClass()).asTransient(context);
+
+            for (int i = 0; i < cnt; i++) {
+               ret = (TransientVector) ret.conj(context, block.yield(context, get(context, i)));
+            }
+
+            return ret.persistent(context, getMetaClass());
+        }
+
         @JRubyMethod(name = "get", alias = "[]", required=1)
         public IRubyObject nth(ThreadContext context, IRubyObject i) {
             int j = RubyNumeric.num2int(i);
-            RubyArray node = arrayFor(j);
-            return node.entry(j & 0x01f);
+            return get(context, j);
         }
 
+
+        public IRubyObject get(ThreadContext context, int i) {
+            RubyArray node = arrayFor(i);
+            return node.entry(i & 0x01f);
+        }
         private RubyArray arrayFor(int i){
             if(i >= 0 && i < cnt)
             {

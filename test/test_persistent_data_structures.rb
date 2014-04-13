@@ -48,6 +48,17 @@ module Persistent
       vector.each { |i| assert_equal vector[i-1], i }
     end
 
+    def test_vector_each
+      vector = Persistent::Vector.vector([])
+      (1..10000).each do |i|
+        vector = vector.add(i)
+      end
+      vector = vector.map { |i| i * i}
+      assert_equal vector.class.name, 'Persistent::Vector'
+      (1..10000).each { |i| assert_equal i * i, vector[i-1] }
+    end
+
+
     def test_vector_pop
       vector = Persistent::Vector.vector([])
       (1..10000).each do |i|
