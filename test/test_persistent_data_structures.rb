@@ -78,6 +78,16 @@ module Persistent
       (1..100).zip(9901..10000).all? { |i, j| assert_equal vector.get(i-1), j }
     end
 
+    def test_vector_reject
+      vector = Persistent::Vector.vector([])
+      (1..10000).each do |i|
+        vector = vector.add(i)
+      end
+      vector = vector.reject { |i| i <= 9900 }
+      assert_equal vector.class.name, 'Persistent::Vector'
+      (1..100).zip(9901..10000).all? { |i, j| assert_equal vector.get(i-1), j }
+    end
+
     def test_vector_pop
       vector = Persistent::Vector.vector([])
       (1..10000).each do |i|

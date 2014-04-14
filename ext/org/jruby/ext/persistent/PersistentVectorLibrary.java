@@ -191,6 +191,23 @@ public class PersistentVectorLibrary implements Library {
             return get(context, j);
         }
 
+        public IRubyObject rejectCommon(ThreadContext context, Block block) {
+            Ruby runtime = context.runtime;
+            TransientVector ret = emptyVector(context, getMetaClass()).asTransient(context);
+
+            for (int i = 0; i < cnt; i++) {
+                IRubyObject value = get(context, i);
+                if (block.yield(context, value).isTrue()) continue;
+                ret = (TransientVector) ret.conj(context, value);
+            }
+
+            return ret.persistent(context, getMetaClass());
+        }
+
+        @JRubyMethod
+        public IRubyObject reject(ThreadContext context, Block block) {
+            return block.isGiven() ? rejectCommon(context, block) : enumeratorize(context.runtime, this, "reject");
+        }
 
         public IRubyObject get(ThreadContext context, int i) {
             RubyArray node = arrayFor(i);
