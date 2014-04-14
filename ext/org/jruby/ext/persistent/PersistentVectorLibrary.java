@@ -158,6 +158,16 @@ public class PersistentVectorLibrary implements Library {
             return ret.persistent(context, getMetaClass());
         }
 
+        @JRubyMethod(name = "clear")
+        public IRubyObject clear(ThreadContext context) {
+           return emptyVector(context, getMetaClass());
+        }
+
+        @JRubyMethod(name = "empty?")
+        public IRubyObject isEmpty(ThreadContext context) {
+            return RubyBoolean.newBoolean(context.runtime, cnt == 0);
+        }
+
         @JRubyMethod(name = "get", alias = "[]", required=1)
         public IRubyObject nth(ThreadContext context, IRubyObject i) {
             int j = RubyNumeric.num2int(i);
