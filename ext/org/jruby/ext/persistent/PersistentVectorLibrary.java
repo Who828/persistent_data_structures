@@ -168,6 +168,23 @@ public class PersistentVectorLibrary implements Library {
             return RubyBoolean.newBoolean(context.runtime, cnt == 0);
         }
 
+        public IRubyObject selectCommon(ThreadContext context, Block block) {
+            Ruby runtime = context.runtime;
+            TransientVector ret = emptyVector(context, getMetaClass()).asTransient(context);
+
+            for (int i = 0; i < cnt; i++) {
+                IRubyObject value = get(context, i);
+                if (block.yield(context, value).isTrue()) ret = (TransientVector) ret.conj(context, value);
+            }
+
+            return ret.persistent(context, getMetaClass());
+        }
+
+        @JRubyMethod
+        public IRubyObject select(ThreadContext context, Block block) {
+            return block.isGiven() ? selectCommon(context, block) : enumeratorize(context.runtime, this, "select");
+        }
+
         @JRubyMethod(name = "get", alias = "[]", required=1)
         public IRubyObject nth(ThreadContext context, IRubyObject i) {
             int j = RubyNumeric.num2int(i);

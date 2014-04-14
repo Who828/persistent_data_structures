@@ -5,3 +5,4 @@ ext/*.so
 ext/*.jar
 pkg
 *.gem
+jruby/
