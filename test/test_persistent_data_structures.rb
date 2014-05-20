@@ -21,6 +21,12 @@ module Persistent
       assert_equal vector.get(919) , 920
     end
 
+    def test_create
+      vector = Persistent::Vector[*1..10000]
+      assert_equal vector.size , 10000
+      assert_equal vector.get(919) , 920
+    end
+
     def test_vector_add
       vector = Persistent::Vector.vector([])
       (1..10000).each do |i|

@@ -124,6 +124,15 @@ public class PersistentVectorLibrary implements Library {
             return ret.persistent(context, (RubyClass) cls);
         }
 
+        @JRubyMethod(name = "[]", rest = true, meta = true)
+        public static IRubyObject create(ThreadContext context, IRubyObject cls, IRubyObject[] items) {
+            TransientVector ret = emptyVector(context, (RubyClass) cls).asTransient(context);
+            for(IRubyObject item : items) {
+                ret = (TransientVector) ret.conj(context, item);
+            }
+            return ret.persistent(context, (RubyClass) cls);
+        }
+
         @JRubyMethod(name = "size", alias = "length")
         public IRubyObject count(ThreadContext context) {
             return JavaUtil.convertJavaToRuby(context.runtime, cnt);
