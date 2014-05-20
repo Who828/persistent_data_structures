@@ -114,7 +114,7 @@ public class PersistentVectorLibrary implements Library {
             return new Node(context.runtime, Node).initialize_params(context, NOEDIT);
         }
 
-        @JRubyMethod(name = "[]", alias = "new", rest = true, meta = true)
+        @JRubyMethod(name = "[]", rest = true, meta = true)
         public static IRubyObject create(ThreadContext context, IRubyObject cls, IRubyObject[] items) {
             TransientVector ret = emptyVector(context, (RubyClass) cls).asTransient(context);
             for(IRubyObject item : items) {
