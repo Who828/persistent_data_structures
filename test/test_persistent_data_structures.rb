@@ -16,9 +16,9 @@ require 'persistent_data_structure'
 module Persistent
   class TestVector < Test::Unit::TestCase
     def test_construct
-      vector = Persistent::Vector.vector([*1..10000])
+      vector = Persistent::Vector.new(*1..10000)
       assert_equal vector.size , 10000
-      assert_equal vector.get(919) , 920
+      assert_equal vector.get(911) , 912
     end
 
     def test_create
@@ -28,7 +28,7 @@ module Persistent
     end
 
     def test_vector_add
-      vector = Persistent::Vector.vector([])
+      vector = Persistent::Vector[]
       (1..10000).each do |i|
         vector = vector.add(i)
       end
@@ -38,7 +38,7 @@ module Persistent
     end
 
     def test_vector_set
-      vector = Persistent::Vector.vector([])
+      vector = Persistent::Vector[]
       (1..10000).each do |i|
         vector = vector.add(i)
       end
@@ -47,7 +47,7 @@ module Persistent
     end
 
     def test_vector_each
-      vector = Persistent::Vector.vector([])
+      vector = Persistent::Vector[]
       (1..10000).each do |i|
         vector = vector.add(i)
       end
@@ -55,7 +55,7 @@ module Persistent
     end
 
     def test_vector_map
-      vector = Persistent::Vector.vector([])
+      vector = Persistent::Vector[]
       (1..10000).each do |i|
         vector = vector.add(i)
       end
@@ -65,7 +65,7 @@ module Persistent
     end
 
     def test_vector_clear
-      vector = Persistent::Vector.vector([])
+      vector = Persistent::Vector[]
       (1..10000).each do |i|
         vector = vector.add(i)
       end
@@ -75,7 +75,7 @@ module Persistent
     end
 
     def test_vector_select
-      vector = Persistent::Vector.vector([])
+      vector = Persistent::Vector[]
       (1..10000).each do |i|
         vector = vector.add(i)
       end
@@ -85,7 +85,7 @@ module Persistent
     end
 
     def test_vector_reject
-      vector = Persistent::Vector.vector([])
+      vector = Persistent::Vector[]
       (1..10000).each do |i|
         vector = vector.add(i)
       end
@@ -95,7 +95,7 @@ module Persistent
     end
 
     def test_vector_pop
-      vector = Persistent::Vector.vector([])
+      vector = Persistent::Vector[]
       (1..10000).each do |i|
         vector = vector.add(i)
       end
