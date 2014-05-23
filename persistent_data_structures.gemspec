@@ -7,6 +7,7 @@ Gem::Specification.new do |s|
   s.version = "0.01"
   s.authors = ["Smit Shah"]
   s.date = Time.now.strftime('%Y-%m-%d')
+  s.summary = 'Persistent data structures'
   s.description = s.summary
   s.email = ["who828@gmail.com"]
   s.require_paths = ["lib"]
