@@ -105,5 +105,20 @@ module Persistent
         vector = new_vector
       end
     end
+
+    def test_vector_inspect
+      vector = Persistent::Vector[1,2,3]
+      assert_equal vector.inspect, 'Persistent::Vector[1, 2, 3]'
+    end
+
+    def test_vector_equality
+      vector = Persistent::Vector[1,2,3]
+      assert vector == [1,2,3]
+      assert vector != [1,2,3,4]
+      assert vector.eql? Persistent::Vector[1,2,3]
+
+      refute vector.eql? [1,2,3]
+      refute vector.eql? Persistent::Vector[1,2,3,4]
+    end
   end
 end

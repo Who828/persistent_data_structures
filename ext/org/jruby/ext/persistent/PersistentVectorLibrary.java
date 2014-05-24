@@ -77,6 +77,11 @@ public class PersistentVectorLibrary implements Library {
             this.array = arry;
             return this;
         }
+
+        public boolean equals(Object other) {
+            return (other instanceof Node) && array.equals(((Node)other).array);
+        }
+
     }
 
     @JRubyClass(name="Vector")
@@ -84,10 +89,9 @@ public class PersistentVectorLibrary implements Library {
         static final AtomicReference<Thread> NOEDIT = new AtomicReference<Thread>(null);
 
         public int cnt;
-        public  int shift;
-        public  Node root;
-        public  RubyArray tail;
-
+        public int shift;
+        public Node root;
+        public RubyArray tail;
 
         public PersistentVector(Ruby runtime, RubyClass rubyClass) {
             super(runtime, rubyClass);
@@ -282,7 +286,7 @@ public class PersistentVectorLibrary implements Library {
             return ret;
         }
 
-        @JRubyMethod(name = "add", required = 1)
+        @JRubyMethod(name = {"add", "append"}, required = 1)
         public IRubyObject add(ThreadContext context, IRubyObject val) {
             if (cnt - tailoff() < 32) {
                 PersistentVector ret = new PersistentVector(context.runtime, getMetaClass());
@@ -365,6 +369,58 @@ public class PersistentVectorLibrary implements Library {
                 return ret;
             }
         }
+
+        @JRubyMethod(name = {"to_a", "to_ary"})
+        public RubyArray toRubyArray(ThreadContext context) {
+            IRubyObject[] array = new IRubyObject[cnt];
+
+            for(int i=0; i < cnt; i++) {
+                array[i] = nth(context, RubyFixnum.newFixnum(context.runtime, i));
+            }
+
+            return getRuntime().newArray(array);
+        }
+
+        @JRubyMethod(name = "inspect")
+        public IRubyObject inspect(ThreadContext context) {
+            Ruby runtime = getRuntime();
+            String className = getMetaClass().getRealClass().getName();
+            return runtime.newString(className + this.toRubyArray(context).inspect());
+        }
+
+        @JRubyMethod(name = "==")
+        public IRubyObject op_equal(ThreadContext context, IRubyObject obj) {
+            Ruby runtime = context.runtime;
+
+            if (eql(obj)) {
+                return runtime.getTrue();
+            }
+
+            if (!obj.respondsTo("to_ary")) {
+                return runtime.getFalse();
+            }
+
+            return toRubyArray(context).op_equal(context, obj.convertToArray());
+        }
+
+        @JRubyMethod(name = "eql?")
+        public IRubyObject eql(ThreadContext context, IRubyObject obj) {
+            Ruby runtime = context.runtime;
+
+            if (this == obj) {
+                return runtime.getTrue();
+            }
+
+            if (obj instanceof PersistentVector) {
+                Node otherRoot = ((PersistentVector)obj).root;
+                RubyArray otherTail = ((PersistentVector)obj).tail;
+                if (root.equals(otherRoot) && tail.equals(otherTail)) {
+                    return runtime.getTrue();
+                }
+            }
+            return runtime.getFalse();
+        }
+
     }
 
     private static class TransientVector extends RubyObject {
