@@ -286,7 +286,7 @@ public class PersistentVectorLibrary implements Library {
             return ret;
         }
 
-        @JRubyMethod(name = "add", required = 1)
+        @JRubyMethod(name = {"add", "append"}, required = 1)
         public IRubyObject add(ThreadContext context, IRubyObject val) {
             if (cnt - tailoff() < 32) {
                 PersistentVector ret = new PersistentVector(context.runtime, getMetaClass());
