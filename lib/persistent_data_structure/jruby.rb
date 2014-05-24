@@ -14,10 +14,5 @@ module Persistent
   class Vector
   	require 'persistent_reference'
     org.jruby.ext.persistent.PersistentVectorLibrary.new.load(JRuby.runtime, false)
-
-    def inspect
-      to_a.inspect
-    end
   end
 end
-
